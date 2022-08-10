@@ -1,7 +1,10 @@
 import './style.css'
 import * as THREE from 'three'
-import gsap from 'gsap'
+
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+
+//resize the page
+
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -24,8 +27,8 @@ window.addEventListener('mousemove', (event) => {
 
 // Sizes
 const sizes = {
-    width: 800,
-    height: 600
+    width: window.innerWidth,
+    height: window.innerHeight
 }
 
 // Camera
@@ -37,15 +40,38 @@ scene.add(camera)
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true
+// controls.autoRotate = true
+// controls.autoRotateSpeed = 10.0
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 })
 renderer.setSize(sizes.width, sizes.height)
-renderer.render(scene, camera)
 
-//Clock
+
+window.addEventListener("resize", () => {
+  // Update sizes
+  sizes.width = window.innerWidth;
+  sizes.height = window.innerHeight;
+  //updates the cameras aspect ratio
+  camera.aspect = sizes.width / sizes.height;
+  camera.updateProjectionMatrix();
+  // Update renderer
+  renderer.setSize(sizes.width, sizes.height);
+  renderer.render(scene, camera);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+
+window.addEventListener("dblclick", () => {
+  if (!document.fullscreenElement){
+      canvas.requestFullscreen()
+  }
+  else {
+    document.exitFullscreen()
+  }
+});
 
 // gsap.to(mesh.position, {duration: 1, delay: 1, x: 2})
 // gsap.to(mesh.position, {duration: 1, delay: 2, x: 0})
