@@ -1,7 +1,25 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-const imageSource = "/image.png";
+import * as dat from 'lil-gui'
+/**
+ * loading textures
+ */
+
+
+const gui = new dat.GUI()
+
+const textureLoader = new THREE.TextureLoader()
+
+const doorColorTexture = textureLoader.load('/textures/door/color.jpg')
+const doorAlphaTexture = textureLoader.load('/textures/door/alpha.jpg')
+const doorAmbientTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg')
+const doorHeightTexture = textureLoader.load('/textures/door/height.jpg')
+const doorMetalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
+const doorNormalTexture = textureLoader.load('/textures/door/normal.jpg')
+const doorRoughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
+const matCapTextures = textureLoader.load('/textures/matcaps/3.png')
+const gradientTextures = textureLoader.load('/textures/gradients/5.jpg')
 
 
 /**
@@ -13,43 +31,8 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 /**
- * loading textures
+ * light
  */
-
-
-const loadingManager = new THREE.LoadingManager();
-loadingManager.onStart = () => {
-  console.log("loading started");
-};
-loadingManager.onLoad = () => {
-  console.log("loading finished");
-};
-loadingManager.onProgress = () => {
-  console.log("loading progressing");
-};
-loadingManager.onError = () => {
-  console.log("loading error");
-};
-
-const textureLoader = new THREE.TextureLoader(loadingManager);
-
-// ...
-
-const colorTexture = textureLoader.load('/textures/door/color.jpg')
-const alphaTexture = textureLoader.load('/textures/door/alpha.jpg')
-const heightTexture = textureLoader.load('/textures/door/height.jpg')
-const normalTexture = textureLoader.load('/textures/door/normal.jpg')
-const ambientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg')
-const metalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
-const roughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
-/**
- * Object
- */
-const geometry = new THREE.BoxGeometry(1, 1, 1)
-const material = new THREE.MeshBasicMaterial({ map: heightTexture })
-const mesh = new THREE.Mesh(geometry, material)
-scene.add(mesh)
-
 
 
 /**
@@ -60,6 +43,63 @@ const sizes = {
     height: window.innerHeight
 }
 
+/**
+ * Objects
+ */
+// const material = new THREE.MeshBasicMaterial()
+
+// const material = new THREE.MeshNormalMaterial();
+// const material = new THREE.MeshMatcapMaterial();
+// material.matcap = matCapTextures
+const material = new THREE.MeshStandardMaterial();
+material.metalness = 0.45;
+material.roughness = 0.46;
+
+material.map = doorColorTexture
+
+// material.gradientMap = gradientTextures;
+
+// gradientTextures.minFilter = THREE.NearestFilter;
+// gradientTextures.magFilter = THREE.NearestFilter;
+// gradientTextures.generateMipmaps = false;
+// material.alphaMap = doorAlphaTexture
+// material.transparent = true
+// material.map = doorColorTexture
+// material.side = THREE.DoubleSide
+
+const plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 1), material)
+
+plane.geometry.setAttribute(
+  "uv2",
+  new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2)
+);
+material.aoMap = doorAmbientTexture;
+material.displacementMap = doorHeightTexture;
+material.transparent = true;
+material.alphaMap = doorAlphaTexture;
+
+material.metalnessMap = doorMetalnessTexture;
+material.roughnessMap = doorRoughnessTexture;
+material.normalMap = doorNormalTexture;
+material.metalness = 0
+material.roughness = 1
+material.aoMapIntensity = 1;
+
+
+
+
+scene.add(plane)
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
+pointLight.position.x = 2;
+pointLight.position.y = 3;
+pointLight.position.z = 4;
+
+gui.add(material, "metalness").min(0).max(1).step(0.0001);
+gui.add(material, "roughness").min(0).max(1).step(0.0001);
+scene.add(ambientLight);
+scene.add(pointLight)
 window.addEventListener('resize', () =>
 {
     // Update sizes
@@ -80,9 +120,9 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 1
+camera.position.z = 3;
+camera.lookAt(plane.position)
+
 scene.add(camera)
 
 // Controls
@@ -106,7 +146,12 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
-
+    //update objects
+    
+    plane.rotation.y = 0.1 * elapsedTime
+   
+    plane.rotation.x= 0.15 * elapsedTime
+  
     // Update controls
     controls.update()
 
